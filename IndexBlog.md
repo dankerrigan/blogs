@@ -104,6 +104,20 @@ See the [Secondary Index documentation][5] for more details.
 
 See the [Riak Search documentation][6] for more details.
 
+## I'm from Missouri, the Show Me state. Let's see some graphs.
+
+The graph below shows the average time to put an object with a single index and to retrieve a random index from the body of indexes that have already been written.  The times include the client-side merging of index object siblings.  It's clear that although the put times for an object + G-Set Term Based Inverted Index are roughly double than that of an object with a Secondary Index, the index retrieval times are less than half.  This suggests that secondary indexes would be better for write heavly loads but the GSet Term Based Inverted Indexes are much where the ratio of reads is greater than the number of writes.
+
+![image](IndexBlog_resources/BenchMetrics.png)
+
+Over the length of the test, it is even clearer that GSet Term Based Inverted Indexes offer higher performance than Seconary Indexes when the workload of Riak skews toward reads.  The use of GSet Term Based Inverted Indexes is very compelling even when you consider that the index merging is happening on the client-side and could be moved to the server.
+
+![image](IndexBlog_resources/BenchMetricsOpsSec.png)
+
+## Next Steps
+- Implement other CRDT Sets that support deletion
+- Implement GSet Term Based Indexes as a Riak Core application so merges can run alongside the Riak cluster
+- Implement strategies for handling large indexes such as term partitioning
 
 [1]: https://github.com/basho/riak-ruby-client/tree/broker-inverted-index
 [2]: https://github.com/basho/riak-ruby-client/blob/broker-inverted-index/lib/riak/crdt/gset.rb#L9-L21
