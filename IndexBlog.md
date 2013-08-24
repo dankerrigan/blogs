@@ -101,6 +101,7 @@ Term Based Inverted Index: `zombie.indexes['zip_inv'] << data['ZipCode']`
 - Storing a key/value pair with a Riak Secondary index takes about half the time as putting an object with a G-Set Term Based Inverted Index because the G-Set index involves an additional Riak put operation for each index being added
 - The Riak object which the index refers to has no knowledge of which indexes have been applied to it
     + It is possible, however, to update the metadata for the Riak object when adding its key to the G-Set
+- There is no option for searching on a range of values (e.g., all `user_group` values from `administrators` to `managers`)
 
 See the [Secondary Index documentation][5] for more details.
 
