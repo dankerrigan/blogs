@@ -47,7 +47,7 @@ Not only are indexes easy to use, they're extremely useful:
 
 Indexing is great, but if you want to use the Bitcask backend or if Secondary Indexes aren't performant enough, there are alternatives.
 
-A G-Set Term Based Inverted Index has the following benefits over a Secondary Index:
+A G-Set Term-Based Inverted Index has the following benefits over a Secondary Index:
 
 - Better read performance at the sacrifice of some write performance
 - Less resource intensive for the Riak cluster
@@ -56,7 +56,7 @@ A G-Set Term Based Inverted Index has the following benefits over a Secondary In
 - Tunable via read and write parameters to improve performance
 - Ideal when the exact index term is known
 
-### Implementation of a G-Set Term Based Inverted Index
+### Implementation of a G-Set Term-Based Inverted Index
 
 A G-Set CRDT (Grow Only Set Convergent/Commutative Replicated Data Type) is a thin abstraction on the Set data type (available in most language standard libraries). It has a defined method for merging conflicting values (i.e. Riak siblings), namely a unioning of the two underlying Sets.  In Riak, the G-Set becomes the value that we store in our Riak cluster in a bucket, and it holds a collection of keys to the objects we're indexing (such as `thevegan3000`).  The key that references this G-Set is the term that we're indexing, `administrator`.  The bucket containing the serialized G-Sets accepts Riak siblings (potentially conflicting values) which are resolved when the index is read.  Resolving the indexes involves merging the sibling G-Sets which means that keys cannot be removed from this index, hence the name: "Grow Only".
 
@@ -70,7 +70,7 @@ A G-Set CRDT (Grow Only Set Convergent/Commutative Replicated Data Type) is a th
 
 ### Great! Show me the code!
 
-As a demonstration, we integrated this logic into a branch of the [Riak Ruby Client][1].  As mentioned before, since a G-Set is actually a very simple construct and Riak siblings are perfect to support the convergent properties of CRDTs, the implementation of a G-Set Term Based Inverted Index is nearly trivial.
+As a demonstration, we integrated this logic into a branch of the [Riak Ruby Client][1].  As mentioned before, since a G-Set is actually a very simple construct and Riak siblings are perfect to support the convergent properties of CRDTs, the implementation of a G-Set Term-Based Inverted Index is nearly trivial.
 
 There's a basic interface that belongs to a Grow Only Set in addition to some basic JSON serialization facilities (not shown):
 
@@ -90,22 +90,22 @@ The index get operation retrieves the index value.  If there are siblings, it re
 
 [inverted_index.rb get index term][4]
 
-With the modified Ruby client, adding a Term Based Inverted Index is just as easy as a Secondary Index. Instead of using `_bin` to indicate a string index and we'll use `_inv` for our Term Based Inverted Index.
+With the modified Ruby client, adding a Term-Based Inverted Index is just as easy as a Secondary Index. Instead of using `_bin` to indicate a string index and we'll use `_inv` for our Term Based Inverted Index.
 
 Binary Secondary Index: `zombie.indexes['zip_bin'] << data['ZipCode']`
 
-Term Based Inverted Index: `zombie.indexes['zip_inv'] << data['ZipCode']`
+Term-Based Inverted Index: `zombie.indexes['zip_inv'] << data['ZipCode']`
 
-### The downsides of G-Set Term Based Inverted Indexes versus Secondary Indexes
+### The downsides of G-Set Term-Based Inverted Indexes versus Secondary Indexes
 - There is no way to remove keys from an index
-- Storing a key/value pair with a Riak Secondary index takes about half the time as putting an object with a G-Set Term Based Inverted Index because the G-Set index involves an additional Riak put operation for each index being added
+- Storing a key/value pair with a Riak Secondary index takes about half the time as putting an object with a G-Set Term-Based Inverted Index because the G-Set index involves an additional Riak put operation for each index being added
 - The Riak object which the index refers to has no knowledge of which indexes have been applied to it
     + It is possible, however, to update the metadata for the Riak object when adding its key to the G-Set
 - There is no option for searching on a range of values (e.g., all `user_group` values from `administrators` to `managers`)
 
 See the [Secondary Index documentation][5] for more details.
 
-### The downsides of G-Set Term Based Inverted Indexes versus Riak Search
+### The downsides of G-Set Term-Based Inverted Indexes versus Riak Search
 Riak Search is an alternative mechanism for searching for content when you don't know which keys you want.
 
 - No advanced searching: Wildcards, boolean queries, range queries, grouping, etc
@@ -114,17 +114,17 @@ See the [Riak Search documentation][6] for more details.
 
 ## I'm from Missouri, the Show Me state. Let's see some graphs.
 
-The graph below shows the average time to put an object with a single index and to retrieve a random index from the body of indexes that have already been written.  The times include the client-side merging of index object siblings.  It's clear that although the put times for an object + G-Set Term Based Inverted Index are roughly double than that of an object with a Secondary Index, the index retrieval times are less than half.  This suggests that secondary indexes would be better for write heavy loads but the G-Set Term Based Inverted Indexes are much better where the ratio of reads is greater than the number of writes.
+The graph below shows the average time to put an object with a single index and to retrieve a random index from the body of indexes that have already been written.  The times include the client-side merging of index object siblings.  It's clear that although the put times for an object + G-Set Term-Based Inverted Index are roughly double than that of an object with a Secondary Index, the index retrieval times are less than half.  This suggests that secondary indexes would be better for write heavy loads but the G-Set Term Based Inverted Indexes are much better where the ratio of reads is greater than the number of writes.
 
 ![image](IndexBlog_resources/BenchMetrics.png)
 
-Over the length of the test, it is even clearer that G-Set Term Based Inverted Indexes offer higher performance than Secondary Indexes when the workload of Riak skews toward reads.  The use of G-Set Term Based Inverted Indexes is very compelling even when you consider that the index merging is happening on the client-side and could be moved to the server for greater performance.
+Over the length of the test, it is even clearer that G-Set Term-Based Inverted Indexes offer higher performance than Secondary Indexes when the workload of Riak skews toward reads.  The use of G-Set Term Based Inverted Indexes is very compelling even when you consider that the index merging is happening on the client-side and could be moved to the server for greater performance.
 
 ![image](IndexBlog_resources/BenchMetricsOpsSec.png)
 
 ## Next Steps
 - Implement other CRDT Sets that support deletion
-- Implement G-Set Term Based Indexes as a Riak Core application so merges can run alongside the Riak cluster
+- Implement G-Set Term-Based Indexes as a Riak Core application so merges can run alongside the Riak cluster
 - Implement strategies for handling large indexes such as term partitioning
 
 [1]: https://github.com/basho/riak-ruby-client/tree/broker-inverted-index
